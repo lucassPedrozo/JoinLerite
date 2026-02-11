@@ -23,6 +23,7 @@ const PayrollDetail: React.FC<PayrollDetailProps> = ({ holerite, hideValues = fa
   const totalDesc = holerite.totais.totalDescontos || 0;
   const liquido = holerite.totais.liquido || 0;
   const effectiveRate = bruto > 0 ? (totalDesc / bruto) * 100 : 0;
+  const adiantamento = holerite.lancamentos.find(l => l.descricao.toUpperCase() === 'ADIANTAMENTO SALARIAL');
 
   return (
     <div className="animate-fade-in space-y-6 pb-12">
@@ -94,7 +95,12 @@ const PayrollDetail: React.FC<PayrollDetailProps> = ({ holerite, hideValues = fa
           </div>
           <div className="p-6 bg-slate-50/50 text-center md:text-left">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Valor Líquido</p>
-            <p className="text-3xl font-bold text-slate-800">{maskCur(liquido)}</p>
+            <p className="text-3xl font-bold text-slate-800">{maskCur(adiantamento ? liquido + adiantamento.valor : liquido)}</p>
+            {adiantamento && (
+              <p className="text-xs text-slate-500 mt-1">
+                {maskCur(liquido)} + Adiantamento {maskCur(adiantamento.valor)}
+              </p>
+            )}
           </div>
         </div>
       </div>

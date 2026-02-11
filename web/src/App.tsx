@@ -6,6 +6,12 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { deleteServerFile, getPdfUrl, getXmlUrl } from './services/api';
 import { Holerite } from './types';
 
+const MONTH_ORDER: Record<string, number> = {
+  'Janeiro': 1, 'Fevereiro': 2, 'Março': 3, 'Abril': 4,
+  'Maio': 5, 'Junho': 6, 'Julho': 7, 'Agosto': 8,
+  'Setembro': 9, 'Outubro': 10, 'Novembro': 11, 'Dezembro': 12,
+};
+
 function App() {
   const [activeTab, setActiveTab] = useState<'upload' | 'analysis'>('upload');
   const [holerites, setHolerites] = useLocalStorage<Holerite[]>('holerites', []);
@@ -40,6 +46,12 @@ function App() {
   };
 
   const selected = holerites.find(h => h.id === selectedId);
+
+  const sortedHolerites = [...holerites].sort((a, b) => {
+    const yearDiff = parseInt(a.ano) - parseInt(b.ano);
+    if (yearDiff !== 0) return yearDiff;
+    return (MONTH_ORDER[a.mes] || 0) - (MONTH_ORDER[b.mes] || 0);
+  });
 
   const fmt = (v: number | undefined) =>
     (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -126,12 +138,27 @@ function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {holerites.map(h => (
+                      {sortedHolerites.map(h => (
                         <tr key={h.id} className="hover:bg-slate-50 transition-colors">
                           <td className="px-6 py-3 font-medium text-slate-900">{h.mes}/{h.ano}</td>
                           <td className="px-6 py-3 text-slate-600">{mask(h.funcionario.nome)}</td>
                           <td className="px-6 py-3 text-right text-emerald-600 font-medium">{maskCurrency(h.totais.bruto)}</td>
-                          <td className="px-6 py-3 text-right font-bold text-slate-800">{maskCurrency(h.totais.liquido)}</td>
+                          <td className="px-6 py-3 text-right font-bold text-slate-800">
+                            {(() => {
+                              const adiant = h.lancamentos.find(l => l.descricao.toUpperCase() === 'ADIANTAMENTO SALARIAL');
+                              const liq = h.totais.liquido || 0;
+                              return adiant ? (
+                                <>
+                                  <div>{maskCurrency(liq + adiant.valor)}</div>
+                                  <div className="text-[10px] text-slate-400 font-normal mt-0.5">
+                                    {maskCurrency(liq)} + Adiant. {maskCurrency(adiant.valor)}
+                                  </div>
+                                </>
+                              ) : (
+                                <div>{maskCurrency(liq)}</div>
+                              );
+                            })()}
+                          </td>
                           <td className="px-6 py-3 text-center">
                             {h.fileId ? (
                               <div className="flex items-center justify-center gap-2">
@@ -189,7 +216,7 @@ function App() {
                   {holerites.length === 0 ? (
                     <div className="p-4 text-center text-sm text-slate-400">Nenhum dado importado</div>
                   ) : (
-                    holerites.map(h => (
+                    sortedHolerites.map(h => (
                       <div key={h.id} className="flex items-center gap-1">
                         <button
                           onClick={() => setSelectedId(h.id)}
