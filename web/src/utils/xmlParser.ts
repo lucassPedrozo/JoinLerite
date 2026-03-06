@@ -1,4 +1,4 @@
-import { Holerite, Lancamento, Funcionario, Totais } from '../types';
+import { Holerite, Lancamento, LancamentoTipo, Funcionario, Totais } from '../types';
 
 const parseCurrency = (value: string): number => {
   if (!value) return 0;
@@ -52,7 +52,7 @@ export const parseHoleriteXML = (xmlContent: string): Holerite[] => {
     const itens = node.getElementsByTagName("item");
     for (let j = 0; j < itens.length; j++) {
       const item = itens[j];
-      const tipoInferido = item.getAttribute("tipo_inferido") as 'vencimento' | 'desconto' || 'vencimento';
+      const tipoInferido: LancamentoTipo = (item.getAttribute("tipo_inferido") as LancamentoTipo | null) || 'vencimento';
       const valorStr = item.getElementsByTagName("valor")[0]?.textContent || "0";
 
       entry.lancamentos.push({

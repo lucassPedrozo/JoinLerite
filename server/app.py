@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 import json
 import logging
@@ -27,6 +28,12 @@ MANIFEST = os.path.join(DATA_DIR, "manifest.json")
 
 for d in [PDF_DIR, XML_DIR]:
     os.makedirs(d, exist_ok=True)
+
+_FILE_ID_RE = re.compile(r"^[a-f0-9]{12}$")
+
+
+def _valid_file_id(file_id: str) -> bool:
+    return bool(_FILE_ID_RE.match(file_id))
 
 
 def _load_manifest():
@@ -143,6 +150,8 @@ def list_files():
 
 @app.route("/api/files/<file_id>/pdf")
 def download_pdf(file_id):
+    if not _valid_file_id(file_id):
+        return jsonify({"error": "ID inválido."}), 400
     path = os.path.join(PDF_DIR, f"{file_id}.pdf")
     if not os.path.exists(path):
         return jsonify({"error": "PDF não encontrado."}), 404
@@ -154,6 +163,8 @@ def download_pdf(file_id):
 
 @app.route("/api/files/<file_id>/xml")
 def download_xml(file_id):
+    if not _valid_file_id(file_id):
+        return jsonify({"error": "ID inválido."}), 400
     path = os.path.join(XML_DIR, f"{file_id}.xml")
     if not os.path.exists(path):
         return jsonify({"error": "XML não encontrado."}), 404
@@ -166,6 +177,8 @@ def download_xml(file_id):
 
 @app.route("/api/files/<file_id>", methods=["DELETE"])
 def delete_file(file_id):
+    if not _valid_file_id(file_id):
+        return jsonify({"error": "ID inválido."}), 400
     for directory, ext in [(PDF_DIR, ".pdf"), (XML_DIR, ".xml")]:
         p = os.path.join(directory, f"{file_id}{ext}")
         if os.path.exists(p):

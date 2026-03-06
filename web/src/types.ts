@@ -33,3 +33,26 @@ export interface Holerite {
   totais: Totais;
   rawXml?: string;
 }
+
+export interface FinancialEntry {
+  id: string;
+  description: string;
+  value: number;
+  type: 'income' | 'expense';
+}
+
+export interface MonthFinancial {
+  month: string;
+  year: string;
+  entries: FinancialEntry[];
+}
+
+export interface RecurringEntry {
+  id: string;
+  description: string;
+  value: number;
+  type: 'income' | 'expense';
+  startMonth: number;
+  startYear: number;
+  installments: number;
+}

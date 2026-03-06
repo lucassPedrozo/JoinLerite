@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, FolderOpen, ChevronRight, FileText, Trash2, Download, FileCode, Eye, EyeOff } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, ChevronRight, FileText, Trash2, Download, FileCode, Eye, EyeOff, Wallet } from 'lucide-react';
 import FileUploader from './components/FileUploader';
 import PayrollDetail from './components/PayrollDetail';
+import FinancialControl from './components/FinancialControl';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { deleteServerFile, getPdfUrl, getXmlUrl } from './services/api';
-import { Holerite } from './types';
+import { Holerite, MonthFinancial, RecurringEntry } from './types';
 
 const MONTH_ORDER: Record<string, number> = {
   'Janeiro': 1, 'Fevereiro': 2, 'Março': 3, 'Abril': 4,
@@ -13,23 +14,31 @@ const MONTH_ORDER: Record<string, number> = {
 };
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'upload' | 'analysis'>('upload');
+  const [activeTab, setActiveTab] = useState<'upload' | 'analysis' | 'financial'>('upload');
   const [holerites, setHolerites] = useLocalStorage<Holerite[]>('holerites', []);
+  const [financialData, setFinancialData] = useLocalStorage<MonthFinancial[]>('financialData', []);
+  const [recurringData, setRecurringData] = useLocalStorage<RecurringEntry[]>('recurringData', []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hideValues, setHideValues] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const fmt = (v: number | undefined) =>
+    (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const mask = (text: string) => hideValues ? '••••••' : text;
   const maskCurrency = (v: number | undefined) => hideValues ? 'R$ ••••••' : fmt(v);
 
   const handleDataLoaded = (data: Holerite[]) => {
-    setHolerites(prev => [...prev, ...data]);
+    setHolerites(prev => {
+      const newKeys = new Set(data.map(h => `${h.mes}-${h.ano}`));
+      const filtered = prev.filter(h => !newKeys.has(`${h.mes}-${h.ano}`));
+      return [...filtered, ...data];
+    });
     if (holerites.length === 0 && data.length > 0) {
       setSelectedId(data[0].id);
       setActiveTab('analysis');
     }
   };
-
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirmDeleteId !== id) {
@@ -52,9 +61,6 @@ function App() {
     if (yearDiff !== 0) return yearDiff;
     return (MONTH_ORDER[a.mes] || 0) - (MONTH_ORDER[b.mes] || 0);
   });
-
-  const fmt = (v: number | undefined) =>
-    (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 font-sans">
@@ -85,6 +91,14 @@ function App() {
                   } ${holerites.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="flex items-center gap-2"><LayoutDashboard className="w-4 h-4" /> Dashboard</div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('financial')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    activeTab === 'financial' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2"><Wallet className="w-4 h-4" /> Financeiro</div>
                 </button>
               </nav>
             </div>
@@ -225,10 +239,10 @@ function App() {
                           }`}
                         >
                           <span className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-slate-400" />
+                            <FileText className={`w-4 h-4 ${selectedId === h.id ? 'text-indigo-200' : 'text-slate-400'}`} />
                             {h.mes}/{h.ano}
                           </span>
-                          {selectedId === h.id && <ChevronRight className="w-3 h-3 text-slate-400" />}
+                          {selectedId === h.id && <ChevronRight className="w-3 h-3 text-indigo-200" />}
                         </button>
                         <button
                           onClick={() => handleDelete(h.id)}
@@ -268,6 +282,19 @@ function App() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'financial' && (
+          <div className="animate-fade-in">
+            <FinancialControl
+              holerites={holerites}
+              financialData={financialData}
+              setFinancialData={setFinancialData}
+              recurringData={recurringData}
+              setRecurringData={setRecurringData}
+              hideValues={hideValues}
+            />
           </div>
         )}
 
