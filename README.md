@@ -1,149 +1,143 @@
 # JoinLerite
 
-> Sistema completo para importação, conversão e análise visual de holerites (folhas de pagamento), com auditoria inteligente por IA.
+Aplicacao web full stack para importacao, conversao e analise visual de holerites (folhas de pagamento). O usuario envia o PDF ou XML do holerite, o backend extrai os lancamentos para um XML estruturado e a interface exibe graficos, detalhamento dos itens, controle financeiro mensal e, opcionalmente, uma auditoria tecnica gerada pelo Google Gemini.
 
----
+## Visao geral
 
-## Visão Geral
+O projeto e dividido em duas partes: um backend em Python com Flask, responsavel por receber os arquivos, extrair os dados do PDF com `pdfplumber` e armazenar PDFs e XMLs gerados; e um frontend em React com TypeScript, construido com Vite e Tailwind CSS, que faz o parse do XML, organiza os holerites por competencia e apresenta os dados em dashboards interativos. Um script PowerShell automatiza a verificacao de dependencias e a inicializacao dos dois servidores no Windows.
 
-O **JoinLerite** automatiza a análise de holerites: basta fazer upload do PDF ou XML e o sistema extrai os dados, gera visualizações interativas e, opcionalmente, utiliza a API do Google Gemini para auditoria técnica contábil.
+## Funcionalidades
 
-### Principais Funcionalidades
+- Upload de holerites em PDF, com conversao automatica para XML estruturado.
+- Upload direto de XML ja convertido.
+- Extracao de funcionario, competencia, lancamentos, totais e valor liquido.
+- Classificacao automatica de itens em vencimentos e descontos.
+- Dashboard com graficos de composicao salarial via Recharts.
+- Detalhamento dos lancamentos de cada holerite.
+- Controle financeiro mensal com receitas, despesas e lancamentos recorrentes parcelados.
+- Modo para ocultar valores sensiveis na tela.
+- Download do PDF original e do XML gerado.
+- Exclusao de registros com limpeza dos arquivos no servidor.
+- Auditoria tecnica e explicacao de itens com Google Gemini (opcional).
+- Persistencia local no navegador via `localStorage`.
 
-| Recurso | Descrição |
-|---------|-----------|
-| **Upload PDF/XML** | Conversão automática de PDF para XML estruturado |
-| **Dashboard interativo** | Gráficos de composição salarial via Recharts |
-| **Download** | Exportação de PDF e XML originais a qualquer momento |
-| **Gerenciamento** | Exclusão de registros com limpeza automática de arquivos |
-| **Auditoria por IA** | Análise técnica via Google Gemini (opcional) |
-| **Persistência** | Dados salvos no servidor e cache local no navegador |
+## Estrutura do projeto
 
----
-
-## Pré-requisitos
-
-| Dependência | Versão mínima | Link |
-|-------------|---------------|------|
-| Python | 3.8+ | [python.org](https://python.org) |
-| Node.js | 18+ | [nodejs.org](https://nodejs.org) |
-
----
-
-## Início Rápido
-
-### Windows
-
-Clique duas vezes em **`start.bat`** ou execute no terminal:
-
-```bash
-.\start.bat
+```text
+.
+|-- server/
+|   |-- app.py
+|   |-- extractor.py
+|   |-- requirements.txt
+|   `-- data/                  (gerado em runtime, ignorado pelo Git)
+|-- web/
+|   |-- assets/
+|   |   `-- favicon.png
+|   |-- src/
+|   |   |-- components/
+|   |   |   |-- FileUploader.tsx
+|   |   |   |-- FinancialControl.tsx
+|   |   |   |-- PayrollChart.tsx
+|   |   |   `-- PayrollDetail.tsx
+|   |   |-- hooks/
+|   |   |   `-- useLocalStorage.ts
+|   |   |-- services/
+|   |   |   |-- api.ts
+|   |   |   `-- gemini.ts
+|   |   |-- utils/
+|   |   |   `-- xmlParser.ts
+|   |   |-- App.tsx
+|   |   |-- index.css
+|   |   |-- main.tsx
+|   |   `-- types.ts
+|   |-- index.html
+|   |-- package.json
+|   |-- tsconfig.json
+|   `-- vite.config.ts
+|-- start.bat
+|-- start.ps1
+|-- .gitignore
+`-- README.md
 ```
 
-O script automaticamente:
+## Como executar
 
-1. Verifica se Python e Node.js estão instalados
-2. Instala dependências (`pip` + `npm`)
-3. Inicia o backend Flask (porta `5000`) e o frontend Vite (porta `3000`)
-4. Abre o navegador em `http://localhost:3000`
+Pre-requisitos: Python 3.8+ e Node.js 18+.
 
-> **Para encerrar:** digite `close`, `exit`, `quit`, `sair` ou `fechar` no terminal.
+No Windows, execute o arquivo `start.bat`. O script verifica Python e Node.js, instala as dependencias quando necessario, sobe o backend Flask na porta `5000`, o frontend Vite na porta `3000` e abre o navegador em `http://localhost:3000`. Para encerrar, digite `close`, `exit`, `quit`, `sair` ou `fechar` no terminal.
 
-### Manual (qualquer SO)
+Em qualquer sistema operacional, tambem e possivel executar manualmente:
 
 ```bash
-# Backend
 cd server
 pip install -r requirements.txt
 python app.py
+```
 
-# Frontend (em outro terminal)
+```bash
 cd web
 npm install
 npm run dev
 ```
 
----
-
-## Configuração da IA (opcional)
-
-Para habilitar a auditoria inteligente com o Google Gemini, crie o arquivo `web/.env.local`:
+Para habilitar a auditoria por IA, crie o arquivo `web/.env.local` com a chave obtida no [Google AI Studio](https://aistudio.google.com/apikey):
 
 ```env
 GEMINI_API_KEY=sua_chave_aqui
 ```
 
-> **⚠️ IMPORTANTE:** Nunca commite arquivos `.env` ou chaves de API. O `.gitignore` já está configurado para ignorar esses arquivos.
+A chave e injetada no bundle do frontend pelo Vite, portanto use o projeto apenas localmente e nunca commite arquivos `.env`.
 
-Obtenha sua chave em: [Google AI Studio](https://aistudio.google.com/apikey)
+## Stacks
 
----
+- Python 3
+- Flask
+- Flask-CORS
+- pdfplumber
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS 4
+- Recharts
+- Lucide React
+- Google Gemini API
+- PowerShell
 
-## Estrutura do Projeto
+## Hook para portfolio
 
-```
-JoinLerite/
-├── server/                  API Flask + motor de extração
-│   ├── app.py               Servidor REST (porta 5000)
-│   ├── extractor.py         Extrator PDF → XML estruturado
-│   ├── requirements.txt     Dependências Python
-│   └── data/                Armazenamento runtime (gitignored)
-│       ├── manifest.json    Índice de arquivos processados
-│       ├── pdfs/            PDFs recebidos
-│       └── xmls/            XMLs gerados
-│
-├── web/                     Interface React + TypeScript
-│   ├── vite.config.ts       Configuração do Vite + proxy
-│   ├── package.json         Dependências Node.js
-│   ├── tsconfig.json        Configuração TypeScript
-│   └── src/
-│       ├── App.tsx           Componente raiz
-│       ├── types.ts          Definições de tipos
-│       ├── components/
-│       │   ├── FileUploader.tsx    Upload e conversão de arquivos
-│       │   ├── PayrollChart.tsx    Gráficos de composição salarial
-│       │   └── PayrollDetail.tsx   Detalhamento do holerite
-│       ├── hooks/
-│       │   └── useLocalStorage.ts  Persistência local
-│       ├── services/
-│       │   ├── api.ts              Comunicação com o backend
-│       │   └── gemini.ts           Integração com Google Gemini
-│       └── utils/
-│           └── xmlParser.ts        Parser de XML para objetos
-│
-├── start.bat                Ponto de entrada Windows
-├── start.ps1                Script de setup e inicialização
-└── .gitignore               Proteção contra vazamento de dados
-```
+**Categoria do projeto:** Aplicacao web full stack
 
----
+**Breve descricao:** Sistema em Python e React que converte holerites em PDF para XML estruturado e os apresenta em dashboards interativos, com controle financeiro mensal e auditoria opcional por IA com Google Gemini.
 
-## Stack Tecnológica
+**Contexto:** O projeto foi desenvolvido para automatizar a leitura e a analise de folhas de pagamento, eliminando a conferencia manual de PDFs. Envolveu extracao de dados de documentos com expressoes regulares, construcao de uma API REST, parse de XML no frontend, visualizacao de dados e integracao com um modelo de linguagem.
 
-### Backend
-- **Python 3** — Linguagem do servidor
-- **Flask** — Framework web REST
-- **pdfplumber** — Extração de dados de PDFs
+**Resultado:** Uma aplicacao local funcional em que o usuario importa seus holerites, acompanha a evolucao salarial por competencia, confere vencimentos e descontos, organiza receitas e despesas do mes e pode solicitar uma analise tecnica automatizada de cada documento.
 
-### Frontend
-- **React 19** — Interface de usuário
-- **TypeScript** — Tipagem estática
-- **Tailwind CSS 4** — Estilização
-- **Recharts** — Gráficos interativos
-- **Vite** — Build tool e dev server
-- **Google Gemini** — Auditoria por IA (opcional)
+**Destaques:**
 
----
+- Motor de extracao de PDF para XML com `pdfplumber` e expressoes regulares.
+- Classificacao automatica de lancamentos em vencimentos e descontos.
+- API REST em Flask com upload, download, listagem e exclusao de arquivos.
+- Validacao de identificadores para evitar path traversal nos downloads.
+- Dashboards interativos com Recharts e interface responsiva com Tailwind CSS.
+- Controle financeiro com lancamentos recorrentes e parcelados.
+- Modo de privacidade para ocultar valores na tela.
+- Integracao opcional com Google Gemini para auditoria de tributos e explicacao de itens.
+- Script de setup que verifica dependencias e inicia backend e frontend com um clique.
 
-## Segurança
+**Stacks:**
 
-- Dados de folha de pagamento (`server/data/`) são ignorados pelo Git
-- Chaves de API devem ser armazenadas exclusivamente em variáveis de ambiente
-- Arquivos `.env`, `.env.local` e derivados são protegidos pelo `.gitignore`
-- Atalhos `.lnk` do Windows são ignorados (contêm caminhos locais do usuário)
+- Python
+- Flask
+- pdfplumber
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- Recharts
+- Google Gemini API
 
----
+**Imagens:**
 
-## Licença
-
-Este projeto é de uso interno. Todos os direitos reservados.
+- `web/assets/[project_images]/img1.png`
+- `web/assets/[project_images]/img2.png`
