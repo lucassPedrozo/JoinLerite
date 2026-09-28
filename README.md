@@ -33,6 +33,10 @@ O projeto e dividido em duas partes: um backend em Python com Flask, responsavel
 |   `-- data/                  (gerado em runtime, ignorado pelo Git)
 |-- web/
 |   |-- assets/
+|   |   |-- [project_images]/
+|   |   |   |-- img1.png
+|   |   |   |-- img2.png
+|   |   |   `-- img3.png
 |   |   `-- favicon.png
 |   |-- src/
 |   |   |-- components/
@@ -150,3 +154,4 @@ Distribuido sob a licenca MIT. Veja o arquivo `LICENSE`.
 
 - `web/assets/[project_images]/img1.png`
 - `web/assets/[project_images]/img2.png`
+- `web/assets/[project_images]/img3.png`
