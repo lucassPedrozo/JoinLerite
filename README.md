@@ -18,7 +18,7 @@ O projeto e dividido em duas partes: um backend em Python com Flask, responsavel
 - Modo para ocultar valores sensiveis na tela.
 - Download do PDF original e do XML gerado.
 - Exclusao de registros com limpeza dos arquivos no servidor.
-- Auditoria tecnica e explicacao de itens com Google Gemini (opcional).
+- Auditoria tecnica e explicacao de itens com Google Gemini via backend (opcional).
 - Persistencia local no navegador via `localStorage`.
 
 ## Estrutura do projeto
@@ -26,6 +26,7 @@ O projeto e dividido em duas partes: um backend em Python com Flask, responsavel
 ```text
 .
 |-- server/
+|   |-- .env                   (opcional, ignorado pelo Git)
 |   |-- app.py
 |   |-- extractor.py
 |   |-- requirements.txt
@@ -57,6 +58,7 @@ O projeto e dividido em duas partes: um backend em Python com Flask, responsavel
 |-- start.bat
 |-- start.ps1
 |-- .gitignore
+|-- LICENSE
 `-- README.md
 ```
 
@@ -80,13 +82,15 @@ npm install
 npm run dev
 ```
 
-Para habilitar a auditoria por IA, crie o arquivo `web/.env.local` com a chave obtida no [Google AI Studio](https://aistudio.google.com/apikey):
+Para habilitar a auditoria por IA, crie o arquivo `server/.env` com a chave obtida no [Google AI Studio](https://aistudio.google.com/apikey):
 
 ```env
 GEMINI_API_KEY=sua_chave_aqui
 ```
 
-A chave e injetada no bundle do frontend pelo Vite, portanto use o projeto apenas localmente e nunca commite arquivos `.env`.
+A chave e lida apenas pelo backend e nunca e enviada ao navegador. Arquivos `.env` sao ignorados pelo Git.
+
+O backend escuta somente em `127.0.0.1` e aceita CORS apenas de `localhost:3000`, portanto os holerites nao ficam expostos para outros dispositivos da rede.
 
 ## Stacks
 
@@ -102,6 +106,10 @@ A chave e injetada no bundle do frontend pelo Vite, portanto use o projeto apena
 - Lucide React
 - Google Gemini API
 - PowerShell
+
+## Licenca
+
+Distribuido sob a licenca MIT. Veja o arquivo `LICENSE`.
 
 ## Hook para portfolio
 
@@ -119,10 +127,11 @@ A chave e injetada no bundle do frontend pelo Vite, portanto use o projeto apena
 - Classificacao automatica de lancamentos em vencimentos e descontos.
 - API REST em Flask com upload, download, listagem e exclusao de arquivos.
 - Validacao de identificadores para evitar path traversal nos downloads.
+- Chave da IA mantida apenas no servidor e backend restrito a `127.0.0.1`.
 - Dashboards interativos com Recharts e interface responsiva com Tailwind CSS.
 - Controle financeiro com lancamentos recorrentes e parcelados.
 - Modo de privacidade para ocultar valores na tela.
-- Integracao opcional com Google Gemini para auditoria de tributos e explicacao de itens.
+- Integracao opcional com Google Gemini, feita pelo backend, para auditoria de tributos e explicacao de itens.
 - Script de setup que verifica dependencias e inicia backend e frontend com um clique.
 
 **Stacks:**

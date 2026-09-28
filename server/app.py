@@ -5,6 +5,7 @@ import json
 import logging
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from extractor import ExtratorHolerite
@@ -17,10 +18,16 @@ logging.basicConfig(
 )
 log = logging.getLogger("holerite")
 
-app = Flask(__name__)
-CORS(app)
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+HOST = "127.0.0.1"
+PORT = 5000
+GEMINI_MODEL = "gemini-3-flash-preview"
+
+app = Flask(__name__)
+CORS(app, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
+
 DATA_DIR = os.path.join(BASE_DIR, "data")
 PDF_DIR = os.path.join(DATA_DIR, "pdfs")
 XML_DIR = os.path.join(DATA_DIR, "xmls")
@@ -189,8 +196,76 @@ def delete_file(file_id):
     return jsonify({"success": True})
 
 
+# ─── IA (Google Gemini) ──────────────────────────────────────────────────────
+# A chave fica apenas no servidor (server/.env) e nunca é enviada ao navegador.
+
+def _gemini_generate(prompt: str) -> str:
+    from google import genai
+
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    response = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+    return response.text or ""
+
+
+@app.route("/api/ai/analyze", methods=["POST"])
+def ai_analyze():
+    if not os.environ.get("GEMINI_API_KEY"):
+        return jsonify({"error": "GEMINI_API_KEY não configurada no servidor."}), 503
+
+    data_context = request.get_json(silent=True)
+    if not isinstance(data_context, dict):
+        return jsonify({"error": "Corpo JSON inválido."}), 400
+
+    prompt = f"""
+    Atue como um Auditor de Folha de Pagamento Sênior e Analista Financeiro.
+    Analise tecnicamente os dados do holerite abaixo.
+
+    Diretrizes da análise:
+    1.  **Auditoria de Tributos**: Verifique se os valores de INSS e IRRF parecem coerentes com a base bruta.
+    2.  **Composição de Renda**: Analise a proporção de salário fixo vs. variáveis (horas extras, comissões).
+    3.  **Alertas**: Identifique descontos não usuais ou altos demais.
+    4.  **Conclusão Técnica**: Um breve parágrafo sobre a saúde financeira demonstrada neste documento.
+
+    *Não use tom coloquial. Use linguagem corporativa e direta.*
+
+    Dados do Holerite (JSON):
+    {json.dumps(data_context, ensure_ascii=False)}
+    """
+
+    try:
+        text = _gemini_generate(prompt)
+        return jsonify({"text": text or "Não foi possível gerar a análise técnica no momento."})
+    except Exception:
+        log.exception("Falha ao chamar Gemini (analyze)")
+        return jsonify({"error": "Ocorreu um erro ao conectar com o serviço de auditoria IA."}), 502
+
+
+@app.route("/api/ai/explain", methods=["POST"])
+def ai_explain():
+    if not os.environ.get("GEMINI_API_KEY"):
+        return jsonify({"error": "GEMINI_API_KEY não configurada no servidor."}), 503
+
+    body = request.get_json(silent=True) or {}
+    descricao = str(body.get("descricao", ""))[:200]
+    tipo = str(body.get("tipo", ""))[:50]
+    if not descricao:
+        return jsonify({"error": "Campo 'descricao' obrigatório."}), 400
+
+    prompt = (
+        f'Definição técnica contábil do item de folha de pagamento: "{descricao}" ({tipo}). '
+        "Explique a base de cálculo usual e finalidade legal. Seja breve."
+    )
+
+    try:
+        text = _gemini_generate(prompt)
+        return jsonify({"text": text or "Sem explicação técnica disponível."})
+    except Exception:
+        log.exception("Falha ao chamar Gemini (explain)")
+        return jsonify({"error": "Erro ao buscar explicação."}), 502
+
+
 # ─── Run ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    log.info("Servidor iniciando em http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    log.info("Servidor iniciando em http://%s:%d", HOST, PORT)
+    app.run(host=HOST, port=PORT, debug=False)

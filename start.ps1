@@ -71,7 +71,7 @@ try {
 # ══════════════════════════════════════════════════════════════════════════════
 Write-Step "Verificando dependencias Python (server/)..."
 
-$pipPackages = @("pdfplumber", "flask", "flask_cors")
+$pipPackages = @("pdfplumber", "flask", "flask_cors", "dotenv", "google.genai")
 $missing = @()
 
 foreach ($pkg in $pipPackages) {
@@ -167,7 +167,7 @@ try {
 
         if (-not $backendReady) {
             try {
-                $null = Invoke-WebRequest -Uri "http://localhost:5000/api/files" -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
+                $null = Invoke-WebRequest -Uri "http://127.0.0.1:5000/api/health" -UseBasicParsing -TimeoutSec 1 -ErrorAction Stop
                 $backendReady = $true
                 Write-Host ""
                 Write-Ok "Backend respondendo na porta 5000"
@@ -197,7 +197,7 @@ try {
     Write-Host "================================================================" -ForegroundColor Magenta
     Write-Host "  JoinLerite esta rodando!" -ForegroundColor Magenta
     Write-Host "  Frontend:  http://localhost:3000" -ForegroundColor Magenta
-    Write-Host "  Backend:   http://localhost:5000" -ForegroundColor Magenta
+    Write-Host "  Backend:   http://127.0.0.1:5000" -ForegroundColor Magenta
     Write-Host "" -ForegroundColor Magenta
     Write-Host "  Comandos: 'close' para encerrar | 'status' para verificar" -ForegroundColor Yellow
     Write-Host "================================================================" -ForegroundColor Magenta
